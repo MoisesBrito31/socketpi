@@ -112,3 +112,7 @@ class Mapa():
             self.salva()
             return True
         return False
+
+    def alteraNomeEquip(self,nomes:list):
+        for x in range(len(nomes)):
+            self.blocos[x].nome = nomes[x]
