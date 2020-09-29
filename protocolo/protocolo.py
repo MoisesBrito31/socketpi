@@ -1,9 +1,12 @@
 import socket
 import datetime
+import libscrc
+import os
+
 
 
 class Protocolo():
-    HEADERSIZE = 512
+    HEADERSIZE = 1024
     PORT = 8844
     ip = "192.168.0.100"
     trans = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -67,7 +70,7 @@ class Protocolo():
             return False
         return True
 
-    def fileExit(self, nome):
+    def fileExist(self, nome):
         msg = self._comandoSimples(f"CMD1005 {nome}",True)
         if msg == '1':
             return True
@@ -80,32 +83,35 @@ class Protocolo():
     def getFile(self, nome):
         ret = []
         msg = self._comandoSimples("CMD1003",False,close=False)
-        print(msg)
+        #print(msg)
         if msg != "RSP1003":
             return ret
 
         msg = self._comandoSimples(f"CMD1001/{nome},0,0,1",False,close=False,conect=False)
-        print(msg)
+        #print(msg[:7])
         if msg[:7] != "RSP1001":
             return ret
 
         index = 1
-        auxiliar = ""
 
         while msg != "RSP10020,ffff,EOF":
-            msg = self._comandoSimples(f"CMD1002{index}",False,close=False,conect=False)
-            print(msg)
+            msg = self._comandoSimples(f"CMD1002{index}",False,close=False,conect=False)           
             if msg != "RSP10020,ffff,EOF":
-                #faz tratamento da string
-                if msg != "falha":
-                    ret.append(msg)
+                valor = self._tratamentoString(msg)
+                if valor > 0:
+                    ret.append(self._stringTrocaQuebraL(msg[valor:]))
                     index+=1
+                else:
+                    return ['falha crc']
 
         msg = self._comandoSimples("CMD1003",False,conect=False)
-        print(msg)
+        #print(msg)
         if msg != "RSP1003":
             return ret
         return ret
+
+    def enviaArquivo(self,nome,pasta):
+        return self._estruturaArquivo(nome,pasta)
 
     def _comandoSimples(self,cmd,format,close=True,conect=True):
         ret = "falha"
@@ -135,3 +141,87 @@ class Protocolo():
             return True
         except:
             return False
+
+    def _tratamentoString(self,rcp:str):
+        try:
+            index = rcp.split(',')
+            ponto = rcp.find(',',14)+1
+            crc_ok = index[1].upper()
+            #print (f'a mensagem é :{rcp}')
+            #print(f" format : {rcp[ponto:]}")
+            #print(f'crc lido: {crc_ok}')
+            crc_lido = self._crc16(rcp[ponto:])
+            #print(f'crc calc: {crc_lido}')       
+            if crc_ok != crc_lido:
+                return -1
+            else:
+                return ponto
+        except:
+            return -1
+
+    def _stringTrocaQuebraL(self,dados:str,decode=True):
+        ret = ""
+        result = ""
+        for x in dados:
+            temp=x
+            #"""
+            if decode:
+                if x == '':
+                    temp=''
+                if x == '':
+                    temp = u'\u000A'
+            else:
+                if x == u'\u000A':
+                    temp = ''
+            #"""
+            result+=temp
+        return result
+
+    def _estruturaArquivo(self,nome,pasta):
+        colecao = []
+        arquivo = open(pasta+nome,'r')
+        dados = self._stringTrocaQuebraL(arquivo.read(),decode=False)
+        #dados = arquivo.read()
+        #print(dados)
+        #tamanho = os.path.getsize(os.path.join(pasta,nome))
+        tamanho = len(dados)
+        #print(f'tipo: {type(dados)}')
+        #print(tamanho)
+        #"""
+        loops = int(tamanho/512)
+        print(f'loops: {loops}')
+        resto = int(tamanho%512)
+        print(f'resto: {resto}')
+        nomeArquivo = nome
+
+        if nome.find(".xml")>0:
+            nomeArquivo = "WLConfig.xml"
+
+        colecao.append(f'CMD1001{nomeArquivo},1,{str(tamanho)},0')
+       
+        for x in range(loops):
+            temp = dados[x*512:(x*512)+512]
+            print(temp)
+            size = str(len(temp))
+            print(size)
+            crc = self._crc16(temp)
+            print(crc)
+            colecao.append(f'CMD1002{size},{crc},{x+1},{temp}')
+        temp = dados[tamanho-resto:]
+        size = str(len(temp))
+        print(size)
+        crc = self._crc16(temp)
+        colecao.append(f'CMD1002{size},{crc},{x+1},{temp}')
+
+        return colecao
+        #"""
+        #return dados
+        
+
+
+    def _crc16(self,dados):
+        b = bytes(dados,'ASCII')
+        valor= str(hex(libscrc.modbus(b))).upper()[2:]
+        hi = valor[2:]
+        lo = valor[:2]
+        return hi+lo
