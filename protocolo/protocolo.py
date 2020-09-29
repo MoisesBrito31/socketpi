@@ -1,8 +1,6 @@
 import socket
 import datetime
-import libscrc
-import os
-
+from libscrc import modbus as crc_modbus
 
 
 class Protocolo():
@@ -83,12 +81,10 @@ class Protocolo():
     def getFile(self, nome):
         ret = []
         msg = self._comandoSimples("CMD1003",False,close=False)
-        #print(msg)
         if msg != "RSP1003":
             return ret
 
         msg = self._comandoSimples(f"CMD1001/{nome},0,0,1",False,close=False,conect=False)
-        #print(msg[:7])
         if msg[:7] != "RSP1001":
             return ret
 
@@ -105,28 +101,34 @@ class Protocolo():
                     return ['falha crc']
 
         msg = self._comandoSimples("CMD1003",False,conect=False)
-        #print(msg)
         if msg != "RSP1003":
             return ret
         return ret
 
     def enviaArquivo(self,nome,pasta):
+        #out = open("output.txt",'w')
         colecao = self._estruturaArquivo(nome,pasta)
-        msg = self._comandoSimples("CMD1003",False.close=False)
+        msg = self._comandoSimples("CMD1003",False,close=False)
         if msg != "RSP1003":
             return False
-        msg = self._comandoSimples(colecao[0],False.close=False,conect=False)
+        msg = self._comandoSimples(colecao[0],False,close=False,conect=False)
         if msg != "RSP1001OK":
             return False
         for x in range(len(colecao)):
+            #out.write(f'{colecao[x]}\r')
             if x != 0:
-                msg = self._comandoSimples(colecao[x],False.close=False,conect=False)
-                if msg != "RSP1001002":
+                msg = self._comandoSimples(colecao[x],False,close=False,conect=False)
+                if msg != "RSP1002":
                     return False
+        msg = self._comandoSimples("CMD1003",False,close=False,conect=False)
+        if msg != "RSP1003":
+            return False
+        
         if nome.find(".xml")>0:
             msg = self._comandoSimples("CMD020055S",False,conect=False)
         else:
             msg = self._comandoSimples("CMD0112",True,conect=False)
+        return True
 
     def _comandoSimples(self,cmd,format,close=True,conect=True):
         ret = "falha"
@@ -171,11 +173,9 @@ class Protocolo():
             return -1
 
     def _stringTrocaQuebraL(self,dados:str,decode=True):
-        ret = ""
         result = ""
         for x in dados:
             temp=x
-            #"""
             if decode:
                 if x == '':
                     temp=''
@@ -184,7 +184,6 @@ class Protocolo():
             else:
                 if x == u'\u000A':
                     temp = ''
-            #"""
             result+=temp
         return result
 
@@ -194,9 +193,7 @@ class Protocolo():
         dados = self._stringTrocaQuebraL(arquivo.read(),decode=False)
         tamanho = len(dados)
         loops = int(tamanho/512)
-        print(f'loops: {loops}')
         resto = int(tamanho%512)
-        print(f'resto: {resto}')
         nomeArquivo = nome
 
         if nome.find(".xml")>0:
@@ -206,24 +203,20 @@ class Protocolo():
        
         for x in range(loops):
             temp = dados[x*512:(x*512)+512]
-            print(temp)
             size = str(len(temp))
-            print(size)
             crc = self._crc16(temp)
-            print(crc)
             colecao.append(f'CMD1002{size},{crc},{x+1},{temp}')
         temp = dados[tamanho-resto:]
         size = str(len(temp))
-        print(size)
         crc = self._crc16(temp)
-        colecao.append(f'CMD1002{size},{crc},{x+1},{temp}')
+        colecao.append(f'CMD1002{size},{crc},{loops+1},{temp}')
 
         return colecao
     
 
     def _crc16(self,dados):
         b = bytes(dados,'ASCII')
-        valor= str(hex(libscrc.modbus(b))).upper()[2:]
+        valor= str(hex(crc_modbus(b))).upper()[2:]
         hi = valor[2:]
         lo = valor[:2]
         return hi+lo
