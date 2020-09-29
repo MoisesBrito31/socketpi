@@ -111,7 +111,22 @@ class Protocolo():
         return ret
 
     def enviaArquivo(self,nome,pasta):
-        return self._estruturaArquivo(nome,pasta)
+        colecao = self._estruturaArquivo(nome,pasta)
+        msg = self._comandoSimples("CMD1003",False.close=False)
+        if msg != "RSP1003":
+            return False
+        msg = self._comandoSimples(colecao[0],False.close=False,conect=False)
+        if msg != "RSP1001OK":
+            return False
+        for x in range(len(colecao)):
+            if x != 0:
+                msg = self._comandoSimples(colecao[x],False.close=False,conect=False)
+                if msg != "RSP1001002":
+                    return False
+        if nome.find(".xml")>0:
+            msg = self._comandoSimples("CMD020055S",False,conect=False)
+        else:
+            msg = self._comandoSimples("CMD0112",True,conect=False)
 
     def _comandoSimples(self,cmd,format,close=True,conect=True):
         ret = "falha"
@@ -147,11 +162,7 @@ class Protocolo():
             index = rcp.split(',')
             ponto = rcp.find(',',14)+1
             crc_ok = index[1].upper()
-            #print (f'a mensagem é :{rcp}')
-            #print(f" format : {rcp[ponto:]}")
-            #print(f'crc lido: {crc_ok}')
             crc_lido = self._crc16(rcp[ponto:])
-            #print(f'crc calc: {crc_lido}')       
             if crc_ok != crc_lido:
                 return -1
             else:
@@ -181,13 +192,7 @@ class Protocolo():
         colecao = []
         arquivo = open(pasta+nome,'r')
         dados = self._stringTrocaQuebraL(arquivo.read(),decode=False)
-        #dados = arquivo.read()
-        #print(dados)
-        #tamanho = os.path.getsize(os.path.join(pasta,nome))
         tamanho = len(dados)
-        #print(f'tipo: {type(dados)}')
-        #print(tamanho)
-        #"""
         loops = int(tamanho/512)
         print(f'loops: {loops}')
         resto = int(tamanho%512)
@@ -214,10 +219,7 @@ class Protocolo():
         colecao.append(f'CMD1002{size},{crc},{x+1},{temp}')
 
         return colecao
-        #"""
-        #return dados
-        
-
+    
 
     def _crc16(self,dados):
         b = bytes(dados,'ASCII')
