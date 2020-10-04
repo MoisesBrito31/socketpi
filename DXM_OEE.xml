@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <configuration>
   <file_info>
-    <info filename="DXM_OEE.xml" guid="3d76c934-f901-402b-a16f-535e70c124c4" software="DXMConfigurationSoftware v4" timestamp="16/05/2020 18:48:09" version="4.8.4.0" os="Win32NT" osversion="Microsoft Windows NT 6.2.9200.0" device="DXM100" solution="None" />
+    <info filename="DXM_OEE.xml" guid="572a66f1-fea0-45c7-b186-ecb9a6f4234f" software="DXMConfigurationSoftware v4" timestamp="03/10/2020 23:16:30" version="4.8.4.0" os="Win32NT" osversion="Microsoft Windows NT 6.2.9200.0" device="DXM100" solution="None" />
   </file_info>
   <local_regs>
     <reg logfiles="1" num="122" name="zerar" />
@@ -12,7 +12,8 @@
   <thresholds />
   <trend />
   <rtu_read>
-  <rtu_read />
+    <rule count="1" mask="0" name="contagem_entrada" offset="0" poll="1.0" remfmt="int" remreg="17" remtype="hold_reg" scale="0" swapped="0" unit="1" localreg="2" maxfail="0" default="0" />
+  </rtu_read>
   <rtu_write>
     <rule count="1" mask="0" name="zerar_conEnt" offset="0" poll="1" remfmt="int" remreg="46" remtype="hold_reg" scale="0" swapped="0" unit="1" localreg="122" fill="0" />
   </rtu_write>
@@ -156,7 +157,7 @@
     </sms_recipient>
   </sms>
   <server_params>
-    <server apn="IP" apnpass="" cellenab="8" cellfw="0.0.0.0" cellfwmask="255.255.255.0" defaddr="0.0.0.0" defgtwy="0.0.0.0" defmask="255.255.255.0" dhcp="1" sms="0" />
+    <server apn="IP" apnpass="vzwinternet" cellenab="8" cellfw="0.0.0.0" cellfwmask="255.255.255.0" defaddr="0.0.0.0" defgtwy="0.0.0.0" defmask="255.255.255.0" dhcp="1" sms="0" />
     <cell_info cell_modelname="SXI-CATM1VZW-001" />
     <maint csqbak="0" cexch="0" csqret="5" csrvwd="0" linkdel="60000" linkret="2" csflags="0" csrvre="0" ckeep="0" linkmax="120000" />
     <eth flags="0" />

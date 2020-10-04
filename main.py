@@ -6,11 +6,12 @@ import datetime
 
 dxm = Protocolo("192.168.0.100")
 
-x = Xml(mapa=Mapa.carrega("mapas2/","amb.mapa"))
+map = Mapa(inicia=True)
+#x = Xml(Mapa.carrega("mapas2/","amb.mapa"),nomeArquivo='base.xml')
+x = Xml(map,nomeArquivo='base.xml')
 x._carregaXml()
-m = Mapa.carrega("mapas2/","amb.mapa")
-m.pasta = "mapas2/"
-m.nomeArquivo = "amb.mapa"
-m.salva()
-print(m.qntEquip)
-#x._compilaArquivo()
+x.salvaArquivo()
+m = x.mapa
+
+
+x._compilaArquivo()
