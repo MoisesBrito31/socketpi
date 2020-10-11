@@ -305,5 +305,36 @@ class OEE():
             self.DXM_Tcp = True
         self.DXM_Status = 'Iniciando'
 
-    
+    def DXM_insertFalha(self):
+        self.DXM_Status = 'DXM OffLine'
+
+    def DXM_insertOnLine(self):
+        self.DXM_Status = 'DXM OnLine'
+
+    def alteraLinhas(self, num:int):
+        if num == 0:
+            num =1
+        result = num-self.quantidade
+        if result > 0:
+            for x in range(result):
+                l = Linha()
+                l.nome = f'Equipamento {x}'
+                l.id = x
+                self.linhas.append(l)
+        if result < 0:
+            index=len(self.linhas)
+            for x in range(self.quantidade-num):
+                self.linhas.remove(index)
+                index-=1
+        self.quantidade = len(self.linhas)
+
+    def flush(self):
+        for x in range(len(self.linhas)):
+            self.linhas[x].historico = []
+            self.linhas[x].histFiltro = []
+
+    def normaliza(self):
+        if len(self.linhas) != self.quantidade:
+            self.alteraLinhas(self.quantidade) 
+
 
