@@ -68,6 +68,22 @@ class Protocolo():
             return False
         return True
 
+    def readReg(self, start, qtd, slaveID=0, modbus=0, timeout=0, open=True, close=True):
+        msg = self._comandoSimples(f'CMD0001 {start},{qtd},{slaveID},{modbus},{timeout}',False,close=close,conect=open)
+        ret = msg.split(',')
+        return ret[1:len(ret)-1]
+
+    def writeReg(self, start, dados:list, slaveID=0, modbus=0, timeout=0, open=True, close=True):
+        cmd = f'CMD0002 {start},{len(dados)},{slaveID},{modbus},{timeout}'
+        for x in dados:
+            cmd = f'{cmd},{x}'
+        print(cmd)
+        msg = self._comandoSimples(cmd,False, close=close, conect=open)
+        if msg == 'RSP0002':
+            return True
+        else:
+            return False
+
     def fileExist(self, nome):
         msg = self._comandoSimples(f"CMD1005 {nome}",True)
         if msg == '1':
@@ -146,6 +162,7 @@ class Protocolo():
             if close:
                 self.trans.close() 
         except Exception as e:
+            print(f'{ret} {str(e)}')
             return f'{ret} {str(e)}'
         return ret
 

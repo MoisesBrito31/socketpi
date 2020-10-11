@@ -3,15 +3,11 @@ from protocolo.mapa import Mapa, Evento, Reg, Bloco
 from protocolo.xml import Xml
 import os
 import datetime
+from threading import Thread
+from time import sleep
+from pyModbusTCP.client import ModbusClient as Modbus 
 
-dxm = Protocolo("192.168.0.100")
+dxm = Modbus(host='192.168.0.100',port=502)
+dxm.open()
 
-map = Mapa(inicia=True)
-#x = Xml(Mapa.carrega("mapas2/","amb.mapa"),nomeArquivo='base.xml')
-x = Xml(map,nomeArquivo='base.xml')
-x._carregaXml()
-x.salvaArquivo()
-m = x.mapa
-
-
-x._compilaArquivo()
+print (dxm.read_holding_registers(5,2))
